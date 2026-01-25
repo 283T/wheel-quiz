@@ -1,0 +1,108 @@
+/**************************************
+ * 全体リセット & iPad対策
+ **************************************/
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  touch-action: none;           /* スクロール禁止 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;  /* 長押しメニュー禁止 */
+  background: #fafafa;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/**************************************
+ * レイアウト
+ **************************************/
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/**************************************
+ * 観覧車SVG
+ **************************************/
+#wheel {
+  width: 90vmin;
+  height: 90vmin;
+}
+
+/**************************************
+ * クイズUI
+ **************************************/
+#quiz {
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+}
+
+#question {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+/* 選択肢 */
+#choices {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.choice {
+  font-size: 40px;
+  padding: 16px 24px;
+  border-radius: 20px;
+  background: #eeeeee;
+  min-width: 80px;
+  min-height: 80px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/**************************************
+ * 管理画面
+ **************************************/
+#adminPanel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #ffffffee;
+  padding: 24px;
+
+  font-size: 18px;
+}
+
+#adminPanel h3 {
+  margin-top: 0;
+}
+
+#adminPanel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#adminPanel input,
+#adminPanel select,
+#adminPanel button {
+  font-size: 18px;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+/**************************************
+ * フィードバック色（script.jsから切替）
+ **************************************/
+body.correct {
+  background: #e8f5e9;
+}
+
+body.wrong {
+  background: #ffebee;
+}
