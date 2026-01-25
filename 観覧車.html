@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>観覧車パズル</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fafafa;
+}
+
+svg {
+  width: 90vmin;
+  height: 90vmin;
+}
+
+.icon {
+  font-size: 36px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+</style>
+</head>
+
+<body>
+
+<svg id="wheel" viewBox="-200 -200 400 400">
+  <!-- 外円 -->
+  <g id="outer">
+    <circle r="160" fill="#fff3e0" stroke="#333" stroke-width="3"/>
+  </g>
+
+  <!-- 内円（操作対象） -->
+  <g id="inner">
+    <circle r="110" fill="#e3f2fd" stroke="#333" stroke-width="3"/>
+  </g>
+</svg>
+
+<script>
+const outerIcons = ["🍎","🍌","🍇","🍊","🍓","🍍"];
+const innerIcons = ["🐶","🐱","🐭","🐰","🐼","🐸"];
+const N = outerIcons.length;
+const STEP = 360 / N;
+
+let currentAngle = 0;
+let startOffset = 0;
+
+const svg = document.getElementById("wheel");
+const inner = document.getElementById("inner");
+
+function placeIcons(group, icons, radius) {
+  icons.forEach((icon, i) => {
+    const angle = (360 / N) * i - 90;
+    const rad = angle * Math.PI / 180;
+    const x = radius * Math.cos(rad);
+    const y = radius * Math.sin(rad);
+
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.textContent = icon;
+    t.setAttribute("x", x);
+    t.setAttribute("y", y);
+    t.setAttribute("class", "icon");
+    group.appendChild(t);
+  });
+}
+
+placeIcons(document.getElementById("outer"), outerIcons, 140);
+placeIcons(inner, innerIcons, 80);
+
+function getTouchAngle(e) {
+  const rect = svg.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left - rect.width / 2;
+  const y = touch.clientY - rect.top - rect.height / 2;
+  return Math.atan2(y, x) * 180 / Math.PI;
+}
+
+inner.addEventListener("touchstart", e => {
+  const angle = getTouchAngle(e);
+  startOffset = angle - currentAngle;
+});
+
+inner.addEventListener("touchmove", e => {
+  e.preventDefault();
+  const angle = getTouchAngle(e);
+  currentAngle = angle - startOffset;
+  inner.setAttribute("transform", `rotate(${currentAngle})`);
+}, { passive: false });
+
+inner.addEventListener("touchend", () => {
+  currentAngle = Math.round(currentAngle / STEP) * STEP;
+  inner.setAttribute("transform", `rotate(${currentAngle})`);
+});
+</script>
+
+</body>
+</html>
