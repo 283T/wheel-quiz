@@ -32,40 +32,6 @@ body {
 }
 
 /**************************************
- * クイズUI
- **************************************/
-#quiz {
-  width: 100%;
-  text-align: center;
-  margin-top: 8px;
-}
-
-#question {
-  font-size: 32px;
-  margin-bottom: 12px;
-}
-
-/* 選択肢 */
-#choices {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-}
-
-.choice {
-  font-size: 40px;
-  padding: 16px 24px;
-  border-radius: 20px;
-  background: #eeeeee;
-  min-width: 80px;
-  min-height: 80px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/**************************************
  * 管理画面
  **************************************/
 #adminPanel {

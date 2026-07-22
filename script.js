@@ -25,13 +25,6 @@ innerGroup.id = "inner";
 svg.appendChild(outerGroup);
 svg.appendChild(innerGroup);
 
-// クイズUI
-const quiz = document.getElementById("quiz");
-quiz.innerHTML = `
-  <div id="question" style="font-size:32px;margin-bottom:12px;"></div>
-  <div id="choices" style="display:flex;justify-content:center;gap:24px;"></div>
-`;
-
 /*************************************************
  * 描画関数
  *************************************************/
@@ -103,51 +96,7 @@ innerGroup.addEventListener("touchmove", e => {
 innerGroup.addEventListener("touchend", () => {
   currentAngle = Math.round(currentAngle / STEP) * STEP;
   innerGroup.setAttribute("transform", `rotate(${currentAngle})`);
-  makeQuiz();
 });
-
-/*************************************************
- * クイズ生成（3択）
- *************************************************/
-function makeQuiz() {
-  const index = Math.floor(Math.random() * N);
-
-  const animal = innerIcons[index];
-  document.getElementById("question").textContent = animal;
-
-  // 正解計算
-  const shift = ((currentAngle / STEP) % N + N) % N;
-  const correct = outerIcons[(index - shift + N) % N];
-
-  // ダミー生成
-  const pool = outerIcons.filter(i => i !== correct);
-  shuffle(pool);
-
-  const options = shuffle([correct, pool[0], pool[1]]);
-
-  const choices = document.getElementById("choices");
-  choices.innerHTML = "";
-
-  options.forEach(opt => {
-    const btn = document.createElement("div");
-    btn.textContent = opt;
-    btn.style.fontSize = "40px";
-    btn.style.padding = "16px 24px";
-    btn.style.borderRadius = "16px";
-    btn.style.background = "#eeeeee";
-    btn.onclick = () => judge(opt === correct);
-    choices.appendChild(btn);
-  });
-}
-
-function judge(ok) {
-  document.body.style.background = ok ? "#e8f5e9" : "#ffebee";
-
-  setTimeout(() => {
-    document.body.style.background = "#fafafa";
-    makeQuiz();
-  }, 800);
-}
 
 /*************************************************
  * 管理画面（長押し3秒）
@@ -225,19 +174,10 @@ document.getElementById("applyBtn").onclick = () => {
   currentAngle = 0;
 
   drawWheel();
-  makeQuiz();
   adminPanel.style.display = "none";
 };
-
-/*************************************************
- * ユーティリティ
- *************************************************/
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
 
 /*************************************************
  * 初期化
  *************************************************/
 drawWheel();
-makeQuiz();
