@@ -31,6 +31,8 @@ svg {
   text-anchor: middle;
   dominant-baseline: middle;
 }
+#inner { cursor: grab; }
+#inner.dragging { cursor: grabbing; }
 </style>
 </head>
 
@@ -79,30 +81,68 @@ function placeIcons(group, icons, radius) {
 placeIcons(document.getElementById("outer"), outerIcons, 140);
 placeIcons(inner, innerIcons, 80);
 
-function getTouchAngle(e) {
+/*************************************************
+ * タッチ・マウス操作（内円のみ）
+ *************************************************/
+let activePointerId = null;
+let pointerStartX = 0;
+let pointerStartY = 0;
+let isDragging = false;
+
+function getPointerAngle(e) {
   const rect = svg.getBoundingClientRect();
-  const touch = e.touches[0];
-  const x = touch.clientX - rect.left - rect.width / 2;
-  const y = touch.clientY - rect.top - rect.height / 2;
+  const x = e.clientX - rect.left - rect.width / 2;
+  const y = e.clientY - rect.top - rect.height / 2;
   return Math.atan2(y, x) * 180 / Math.PI;
 }
 
-inner.addEventListener("touchstart", e => {
-  const angle = getTouchAngle(e);
-  startOffset = angle - currentAngle;
+inner.addEventListener("pointerdown", e => {
+  if (activePointerId !== null || !e.isPrimary || e.button !== 0) return;
+  e.preventDefault();
+  activePointerId = e.pointerId;
+  pointerStartX = e.clientX;
+  pointerStartY = e.clientY;
+  isDragging = false;
+  startOffset = getPointerAngle(e) - currentAngle;
+  inner.setPointerCapture(e.pointerId);
+  inner.classList.add("dragging");
 });
 
-inner.addEventListener("touchmove", e => {
-  e.preventDefault();
-  const angle = getTouchAngle(e);
-  currentAngle = angle - startOffset;
-  inner.setAttribute("transform", `rotate(${currentAngle})`);
-}, { passive: false });
+function updatePointerRotation(e) {
+  if (Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY) > 5) {
+    isDragging = true;
+  }
+  if (isDragging) {
+    currentAngle = getPointerAngle(e) - startOffset;
+    inner.setAttribute("transform", `rotate(${currentAngle})`);
+  }
+}
 
-inner.addEventListener("touchend", () => {
+inner.addEventListener("pointermove", e => {
+  if (e.pointerId !== activePointerId) return;
+  e.preventDefault();
+  updatePointerRotation(e);
+});
+
+function finishRotation(e) {
+  if (e.pointerId !== activePointerId) return;
+  if (e.type === "pointerup") {
+    updatePointerRotation(e);
+    // マウスのクリックは1目盛り進める。ドラッグ後は追加で回さない。
+    if (e.pointerType === "mouse" && !isDragging) currentAngle += STEP;
+  }
+  activePointerId = null;
   currentAngle = Math.round(currentAngle / STEP) * STEP;
   inner.setAttribute("transform", `rotate(${currentAngle})`);
-});
+  inner.classList.remove("dragging");
+  if (inner.hasPointerCapture(e.pointerId)) {
+    inner.releasePointerCapture(e.pointerId);
+  }
+}
+
+inner.addEventListener("pointerup", finishRotation);
+inner.addEventListener("pointercancel", finishRotation);
+inner.addEventListener("lostpointercapture", finishRotation);
 </script>
 
 </body>
