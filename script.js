@@ -71,32 +71,67 @@ function placeIcons(group, icons, radius) {
 }
 
 /*************************************************
- * タッチ操作（内円のみ）
+ * タッチ・マウス操作（内円のみ）
  *************************************************/
-function getTouchAngle(e) {
+let activePointerId = null;
+let pointerStartX = 0;
+let pointerStartY = 0;
+let isDragging = false;
+
+function getPointerAngle(e) {
   const rect = svg.getBoundingClientRect();
-  const touch = e.touches[0];
-  const x = touch.clientX - rect.left - rect.width / 2;
-  const y = touch.clientY - rect.top - rect.height / 2;
+  const x = e.clientX - rect.left - rect.width / 2;
+  const y = e.clientY - rect.top - rect.height / 2;
   return Math.atan2(y, x) * 180 / Math.PI;
 }
 
-innerGroup.addEventListener("touchstart", e => {
-  const angle = getTouchAngle(e);
-  startOffset = angle - currentAngle;
+innerGroup.addEventListener("pointerdown", e => {
+  if (activePointerId !== null || !e.isPrimary || e.button !== 0) return;
+  e.preventDefault();
+  activePointerId = e.pointerId;
+  pointerStartX = e.clientX;
+  pointerStartY = e.clientY;
+  isDragging = false;
+  startOffset = getPointerAngle(e) - currentAngle;
+  innerGroup.setPointerCapture(e.pointerId);
+  innerGroup.classList.add("dragging");
 });
 
-innerGroup.addEventListener("touchmove", e => {
-  e.preventDefault();
-  const angle = getTouchAngle(e);
-  currentAngle = angle - startOffset;
-  innerGroup.setAttribute("transform", `rotate(${currentAngle})`);
-}, { passive: false });
+function updatePointerRotation(e) {
+  if (Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY) > 5) {
+    isDragging = true;
+  }
+  if (isDragging) {
+    currentAngle = getPointerAngle(e) - startOffset;
+    innerGroup.setAttribute("transform", `rotate(${currentAngle})`);
+  }
+}
 
-innerGroup.addEventListener("touchend", () => {
+innerGroup.addEventListener("pointermove", e => {
+  if (e.pointerId !== activePointerId) return;
+  e.preventDefault();
+  updatePointerRotation(e);
+});
+
+function finishRotation(e) {
+  if (e.pointerId !== activePointerId) return;
+  if (e.type === "pointerup") {
+    updatePointerRotation(e);
+    // マウスのクリックは1目盛り進める。ドラッグ後は追加で回さない。
+    if (e.pointerType === "mouse" && !isDragging) currentAngle += STEP;
+  }
+  activePointerId = null;
   currentAngle = Math.round(currentAngle / STEP) * STEP;
   innerGroup.setAttribute("transform", `rotate(${currentAngle})`);
-});
+  innerGroup.classList.remove("dragging");
+  if (innerGroup.hasPointerCapture(e.pointerId)) {
+    innerGroup.releasePointerCapture(e.pointerId);
+  }
+}
+
+innerGroup.addEventListener("pointerup", finishRotation);
+innerGroup.addEventListener("pointercancel", finishRotation);
+innerGroup.addEventListener("lostpointercapture", finishRotation);
 
 /*************************************************
  * 管理画面（長押し3秒）
@@ -143,15 +178,31 @@ adminPanel.innerHTML = `
   <button id="closeBtn">×</button>
 `;
 
-adminButton.addEventListener("touchstart", () => {
+let adminPointerId = null;
+
+adminButton.addEventListener("pointerdown", e => {
+  if (adminPointerId !== null || !e.isPrimary || e.button !== 0) return;
+  e.preventDefault();
+  adminPointerId = e.pointerId;
+  adminButton.setPointerCapture(e.pointerId);
   pressTimer = setTimeout(() => {
     adminPanel.style.display = "flex";
   }, 3000);
 });
 
-adminButton.addEventListener("touchend", () => {
+function cancelAdminPress(e) {
+  if (e.pointerId !== adminPointerId) return;
   clearTimeout(pressTimer);
-});
+  adminPointerId = null;
+  if (adminButton.hasPointerCapture(e.pointerId)) {
+    adminButton.releasePointerCapture(e.pointerId);
+  }
+}
+
+adminButton.addEventListener("pointerup", cancelAdminPress);
+adminButton.addEventListener("pointercancel", cancelAdminPress);
+adminButton.addEventListener("lostpointercapture", cancelAdminPress);
+adminButton.addEventListener("contextmenu", e => e.preventDefault());
 
 document.getElementById("closeBtn").onclick = () => {
   adminPanel.style.display = "none";
